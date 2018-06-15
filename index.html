@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<?php session_start(); 
-include("config.php");
-?>
+
 
 <head>
 
@@ -116,29 +114,6 @@ include("config.php");
 </div>
 </div>
 
-<?php
-if (isset($_POST['submit_login']))
-{    
-
-    $username=$_POST['username'];
-    $password=$_POST['password'];
-
-    $ses_sql="SELECT * FROM login WHERE uname='$username' and pass='$password'";
-    $recent= mysqli_query($connect, $ses_sql);
-    $row = mysqli_fetch_array($recent);
-    $_SESSION['login_user']=$row['uname'];
-
-    if (mysqli_num_rows( $recent) != 0)
-    {
-        session_start();
-        echo "<script language='javascript' type='text/javascript'> location.href='royal.php' </script>";   
-    }
-    else
-    {
-        echo "<script type='text/javascript'>alert('User Name Or Password Invalid!')</script>";
-    }
-}
-?>
 
 <div class="modal fade" id="model_manage_profile">
     <div class="modal-dialog">
@@ -185,26 +160,6 @@ if (isset($_POST['submit_login']))
         return output;
     }
 </script>
-<?php
-if (isset($_POST['submit_profile']))
-{    
-
-    $current_Password=$_POST['old_password'];
-    $new_Password=$_POST['new_password'];
-
-    $sql = "SELECT * FROM login where pass ='$current_Password'";
-    $result = mysqli_query($connect, $sql);
-
-    if (mysqli_num_rows($result) > 0) {
-          $ses_sql1="UPDATE login SET pass = '$new_Password' where pass ='$current_Password' ";
-        mysqli_query($connect, $ses_sql1);
-        echo "<script type='text/javascript'>alert('Password Changed successfuly..!');</script>";
-    } else {
-        echo "<script type='text/javascript'>alert('Sorry Current Password is Invalid!')</script>";
-    }
-}
-?>
-
 <!-- About Section -->
 
 <div class="container" >
@@ -227,100 +182,8 @@ if (isset($_POST['submit_profile']))
 
 </div>
 
-<div class="container">
-    <div class="row">
-        <?php
-        $imagesDirectory = "upload_images/";
 
-        if(is_dir($imagesDirectory))
-        {
-            $opendirectory = opendir($imagesDirectory);
-            
-            while (($image = readdir($opendirectory)) !== false)
-            {
-                if(($image == '.') || ($image == '..'))
-                {
-                    continue;
-                }
-
-                $imgFileType = pathinfo($image,PATHINFO_EXTENSION);
-
-                
-                if(($imgFileType == 'jpg') || ($imgFileType == 'png'))
-                    {  ?>
-
-                        <div class="col-md-4">
-                            <div class="thumbnail">
-                                <?php
-                                echo "<img src='upload_images/".$image."' alt='apple2'   width='100%' height='200' > ";
-                                ?>
-                                <div class="caption">
-                                    <?php 
-                                    $ses_sql="SELECT * FROM gallary WHERE photo_name ='$image' ";
-                                    $recent= mysqli_query($connect, $ses_sql);
-                                    $row = mysqli_fetch_array($recent);
-                                    ?> <p> <?php echo $row["description"] ; ?> </p><br></br><?php
-                                    ?>
-                                </div>
-                            </div>
-                        </div>
-                        <?php
-                    }
-                }
-                closedir($opendirectory);
-            }
-            ?>
-        </div>
-    </div>
-
-    <?php if(isset($_SESSION['login_user'])): ?>
-        <div class="container"  id="gallary">
-          <br></br>
-          <h3 >Gallary</h3>
-          <br></br>
-          <!-- Team -->
-          <div class="jumbotron">
-            <div class="container">
-                <div class="team-member">  
-                    <div class="rodw">
-                        <div class="col-md-2">
-                            <a class="nav-link js-scroll-trigger btn btn-primary" style="background-color: black; color: white;"  data-toggle="modal" data-target="#myModal1"  > <i class="fa fa-upload"></i> </span> Upload</a>
-                            <br></br>
-                        </div>  
-                        <div class="col-lg-12">
-                            <?php
-                            $sql="SELECT *  FROM gallary";
-                            $result=mysqli_query($connect,$sql);
-
-                            ?>
-
-                            <div class="table-responsive">  
-                              <table id="editable_table" class="table table-hover ">
-                                <thead style=" background-color:#27c4ac;color: white;">
-                                  <tr>
-                                    <th>ID</th>
-                                    <th>Photo</th>
-                                    <th>Desc</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                              <?php
-                              while($row = mysqli_fetch_array($result))
-                              {
-                                  echo'
-                                  <tr>
-                                  <td>'.$row["id"].'</td>
-                                  <td>';  echo '<img  width="100%" height="200" src="upload_images/'.$row["photo_name"].'" />';echo'</td>
-                                  <td> <textarea name="" id="" cols="45" rows="10">'.$row["description"].'</textarea></td>
-                                  </tr>
-                                  ';
-                              }
-                              ?>
-                          </tbody>
-                      </table>
-                  </div>  
-              </div>
-          </div> 
+   
 
           <div class="modal fade" id="myModal1">
             <div class="modal-dialog">
@@ -354,46 +217,6 @@ if (isset($_POST['submit_profile']))
 <?php
 // Check if the form was submitted
 
-if (isset($_POST['submit_upload'])){
-    // Check if file was uploaded without errors
-    if(isset($_FILES["photo"]) && $_FILES["photo"]["error"] == 0){
-        $allowed = array("jpg" => "image/jpg", "jpeg" => "image/jpeg", "gif" => "image/gif", "png" => "image/png");
-        $filename = $_FILES["photo"]["name"];
-        $filetype = $_FILES["photo"]["type"];
-        $filesize = $_FILES["photo"]["size"];
-        $desc = $_POST["text"];
-        // Verify file extension
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-        if(!array_key_exists($ext, $allowed)) die("Error: Please select a valid file format.");
-        // Verify file size - 5MB maximum
-        $maxsize = 5 * 1024 * 1024;
-        if($filesize > $maxsize) die("Error: File size is larger than the allowed limit.");
-        // Verify MYME type of the file
-        if(in_array($filetype, $allowed)){
-            // Check whether file exists before uploading it
-            if(file_exists("upload_images/" . $_FILES["photo"]["name"])){
-             echo "<script type='text/javascript'>alert('Photo is Already Exist..!')</script>";
-         } else{
-            move_uploaded_file($_FILES["photo"]["tmp_name"], "upload_images/" . $_FILES["photo"]["name"]);
-            $sql1 = "INSERT INTO gallary (photo_name,description)
-            VALUES('{$filename}','{$desc}')";
-            if (mysqli_query($connect, $sql1)) {
-                ?><script type='text/javascript'>
-                    </script>"<?php
-                } else {
-                    echo "<script type='text/javascript'>alert('Error in Database..!')</script>";
-                }
-
-            } 
-        } else{
-            echo "<script type='text/javascript'>alert('There was a problem uploading your file. Please try again..!')</script>"; 
-        }
-    } else{
-     echo "<script type='text/javascript'>alert('Error..! Please select Photo')</script>";
- }
-}
-?>
-<?php endif; ?>
 <!-- ABout Page staret Here -->
 <div class="container"  id="team">
   <br></br>
@@ -498,23 +321,6 @@ if (isset($_POST['submit_upload'])){
 </div>
 </div>
 </div>
-
-<?php
-if(isset($_POST["submit_contact"])){
-
-    $name=$_POST['name'];
-    $email=$_POST['email'];
-    $subject = $_POST['subject'];
-    $message = $_POST['msg'];
-    $headers = 'From:'. $email . "rn"; // Sender's Email
-    $headers .= 'Cc:'. $email . "rn"; // Carbon copy to Sender
-    // Message lines should not exceed 70 characters (PHP rule), so wrap it
-    $message = wordwrap('From:-\n '.$name.'\n Message:-'.$message, 70);
-    // Send Mail By PHP Mail Function
-    mail("shreekrishnajangid12@gail.com", $subject, $message, $headers);
-    echo "<script type='text/javascript'>alert('Your mail has been sent successfuly ! Thank you for your feedback..!')</script>";
-}  
-?>
 
 <!-- Footer -->
 <footer class=" bg-dark">
